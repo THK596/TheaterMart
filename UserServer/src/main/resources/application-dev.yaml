@@ -1,0 +1,21 @@
+# 数据库配置
+tm:
+  db:
+    name: tm_user
+
+# Redis配置
+#redis:
+redis:
+  pw:
+
+# RabbitMQ配置
+
+# Main配置
+
+#邮箱配置
+mail:
+  username: 934504905@qq.com
+
+
+
+

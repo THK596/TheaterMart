@@ -1,0 +1,21 @@
+# 应用服务 WEB 访问端口
+server:
+  port: 8089
+
+spring:
+  application:
+    name: OrderServer
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+      config:
+        file-extension: yaml
+        shared-configs:
+          - data-id: jdbc.yaml
+          - data-id: redis.yaml
+          - data-id: rabbitmq.yaml
+          - data-id: swagger3.yaml
+          - data-id: mail.yaml
+          - data-id: nacos.yaml
+  profiles:
+    active: dev

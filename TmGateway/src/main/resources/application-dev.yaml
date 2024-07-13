@@ -1,0 +1,12 @@
+server:
+  port: 8081
+# 数据库配置
+
+
+# Redis配置
+#redis:
+
+# RabbitMQ配置
+
+# Main配置
+

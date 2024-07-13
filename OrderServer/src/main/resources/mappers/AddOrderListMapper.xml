@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.gyk.orderserver.mapper.AddOrderListMapper">
+
+    <insert id="saveBatch" parameterType="java.util.List">
+        INSERT INTO order_details (id, order_id, good_id, quantity, order_price)
+        VALUES
+        <foreach collection="list" item="order" separator=",">
+            (#{order.id},#{order.orderId},#{order.goodId},#{order.quantity},#{order.orderPrice})
+        </foreach>
+    </insert>
+</mapper>

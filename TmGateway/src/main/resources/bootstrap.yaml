@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: TmGateway
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: UserServer
+          uri: lb://UserServer:8087
+          predicates:
+            - Path=/api/auth/**,/api/test/**,/api/user/**
+        - id: CommodityServer
+          uri: lb://CommodityServer:8086
+          predicates:
+            - Path=/api/goods/**
+        - id: CartServer
+          uri: lb://CartServer:8088
+          predicates:
+            - Path=/api/cartItem/**,/api/cart/**
+        - id: OrderServer
+          uri: lb://OrderServer:8089
+          predicates:
+            - Path=/api/order/**,/api/order_details/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:8080"
+              - "*"
+            allowed-methods:
+              - "*"
+            allowed-headers:
+              - "*"
+
+  main:
+    web-application-type: reactive
+
+  profiles:
+    active: dev

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.gyk.cartserver.mapper.CartItemMapper">
+    <insert id="insertByUserId" parameterType="cn.gyk.cartserver.domain.dto.UpdateCartParams">
+        INSERT INTO cart_item (id,cart_id, product_id, quantity,create_time,update_time)
+        SELECT #{id}, c.id, #{productId}, #{quantity},#{createTime},#{updateTime}
+            FROM carts c
+        WHERE c.user_id = #{userId}
+    </insert>
+    <update id="updateById1" parameterType="cn.gyk.cartserver.domain.dto.UpdateCartParams">
+        UPDATE cart_item
+        SET
+            quantity = #{quantity},
+            product_id = #{productId},
+            update_time = #{updateTime}
+        WHERE cart_item.id = #{id}
+    </update>
+    <delete id="deleteByUserAndGoodIds">
+        DELETE ci
+        FROM cart_item ci
+        INNER JOIN carts c ON ci.cart_id = c.id
+        WHERE c.user_id = #{userId}
+        AND ci.product_id IN
+        <foreach collection="goodIdList" item="goodId" open="(" separator="," close=")">
+            #{goodId}
+        </foreach>
+    </delete>
+    <select id="selectByUserIdAndProductId" resultType="cn.gyk.cartserver.domain.dto.UpdateCartParams">
+        SELECT
+            cart_item.id,
+            carts.user_id,
+            cart_item.product_id,
+            cart_item.quantity
+        FROM
+            cart_item
+                INNER JOIN carts ON cart_item.cart_id = carts.id
+        WHERE
+            carts.user_id = #{userId}
+          AND cart_item.product_id = #{productId}
+    </select>
+</mapper>

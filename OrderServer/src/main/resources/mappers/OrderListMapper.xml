@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.gyk.orderserver.mapper.OrderListMapper">
+    <select id="GetOrderList" resultType="cn.gyk.orderserver.domain.vo.OrderDetailsVo">
+        SELECT
+            orders.id,
+            orders.user_id,
+            orders.total_price,
+            orders.create_time,
+            orders.`status`,
+            order_details.order_id,
+            order_details.good_id,
+            order_details.quantity,
+            order_details.order_price
+        FROM
+            orders
+                INNER JOIN order_details ON orders.id = order_details.order_id
+        WHERE
+            orders.user_id = #{userId}
+    </select>
+</mapper>

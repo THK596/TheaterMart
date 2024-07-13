@@ -1,0 +1,19 @@
+# 数据库配置
+tm:
+  db:
+    name: tm_order
+
+# Redis配置
+redis:
+  db: 0
+  host: 127.0.0.1
+  pw:
+
+# RabbitMQ配置
+
+# Main配置
+
+
+
+
+

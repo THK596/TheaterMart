@@ -22,12 +22,18 @@ public class MyUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 查询用户信息
         LambdaQueryWrapper<DBUser> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DBUser::getUsername, username);
+        queryWrapper.eq(DBUser::getUsername, username)
+                    .eq(DBUser::getStatus, 1);
         DBUser dbUser = DBUserMapper.selectOne(queryWrapper);
         // 查询失败抛出异常
         if (Objects.isNull(dbUser)) {
             throw new UsernameNotFoundException(username+"用户名或者密码错误");
         }
+        // 判断账号状态
+        if(dbUser.getStatus() == 0){
+            throw new UsernameNotFoundException(username + "账号已被锁定");
+        }
+
         // TODO 查询对应的权限信息
 
         //封装成UserDetails返回

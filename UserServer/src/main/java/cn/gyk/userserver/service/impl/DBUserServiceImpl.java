@@ -9,6 +9,7 @@ import cn.gyk.userserver.domain.entity.DBUser;
 import cn.gyk.userserver.mapper.DBUserMapper;
 import cn.gyk.userserver.service.DBUserService;
 import cn.gyk.userserver.web.JwtUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,9 @@ public class DBUserServiceImpl extends ServiceImpl<DBUserMapper, DBUser> impleme
     private AmqpTemplate amqpTemplate;
 
     @Resource
+    DBUserMapper dbUserMapper;
+
+    @Resource
     private JwtUtil jwtUtil;
 
     private final AuthenticationManager authenticationManager;
@@ -60,6 +64,7 @@ public class DBUserServiceImpl extends ServiceImpl<DBUserMapper, DBUser> impleme
      */
     @Override
     public LoginR UserLogin(LoginParams loginParams) {
+        String username = loginParams.getUsername();
         // 传入用户名和密码 将是否认证标记设置为false
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(
@@ -72,12 +77,30 @@ public class DBUserServiceImpl extends ServiceImpl<DBUserMapper, DBUser> impleme
             authentication = authenticationManager.authenticate(authenticationToken);
         } catch (AuthenticationException e) {
             log.error("登陆异常");
-            return LoginR.error(Constants.CODE_400,"登陆异常！请检查");
+            // 记录登录失败次数
+            Integer count = (Integer) redisTemplate.opsForValue().get(username + "_login_error_count");
+            if (count == null) {
+                count = 0;
+            }
+            count++;
+            redisTemplate.opsForValue().set(username + "_login_error_count", count);
+
+            //  如果错误次数达到3次，锁定账户
+            if (count >= 3) {
+                // 使用 QueryWrapper 修改数据库用户状态为锁定状态
+                LambdaQueryWrapper<DBUser> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(DBUser::getUsername, username);
+                DBUser dbUser = new DBUser();
+                dbUser.setStatus(0);
+                dbUserMapper.update(dbUser, queryWrapper);
+                return LoginR.error(Constants.CODE_400,"账户已被锁定，请联系管理员");
+            }
+            return LoginR.error(Constants.CODE_400,"账号或密码错误！！");
         }
         // 获取返回的用户
         DBUser dbUser = (DBUser) authentication.getPrincipal();
         if (dbUser == null) {
-            return LoginR.error(Constants.CODE_400,"用户名或密码错误");
+            return LoginR.error(Constants.CODE_400,"账号或密码错误！！");
         }
         log.info("登陆后的用户==========》{}",dbUser);
         // 将用户信息通过JWT生成token，返回给前端
@@ -88,54 +111,11 @@ public class DBUserServiceImpl extends ServiceImpl<DBUserMapper, DBUser> impleme
         map.put("userAvatar",dbUser.getUserAvatar());
         map.put("status",dbUser.getStatus());
         String token = jwtUtil.generateToken(map);
-        redisTemplate.opsForValue().set(dbUser.getUsername(), token);
-
-
-
-        /*
-         * 测试Token解析
-         */
-//        try {
-////            Claims claims = jwtUtil.parseToken(token);
-////            redisTemplate.opsForValue().set(dbUser.getUsername(), claims);
-//        } catch (Exception e) {
-//            System.out.println("解析错误");
-//            throw new RuntimeException(e);
-//        }
+        // 登录成功，清除错误次数
+        redisTemplate.delete(dbUser.getUsername() + "_login_error_count");
         return LoginR.ok(token);
 
     }
-
-
-
-
-
-//    public Result selectOneUserInfo(String email) {
-//        QueryWrapper<DBUser> queryWrapper;
-//        try {
-//            queryWrapper = new QueryWrapper<>();
-//            queryWrapper.eq("email", email);
-//        } catch (Exception e) {
-//            throw new RuntimeException("邮箱信息有误");
-//        }
-////        redisTemplate.opsForValue().set(email,email);
-//        return Result.success(queryWrapper);
-//    }
-
-//    // TODO 通过消息队列发送userID
-//    public Result sendCodeMessage(String email) {
-//        // 获取用户信息
-//        Result result = selectOneUserInfo(email);
-//        if(result.getCode() == Constants.CODE_200){
-//            System.out.println(result);
-//            amqpTemplate.convertAndSend(UpdateUserInfo.EXCHANGE_NAME,UpdateUserInfo.ROUTING_KEY);
-////            QueryWrapper<DBUser> queryWrapper = (QueryWrapper<DBUser>) result.getData();
-////            DBUser dbUser = baseMapper.selectOne(queryWrapper);
-//                return Result.success(null);
-//        } else {
-//            return Result.failed(Constants.CODE_401, result.getMsg());
-//        }
-//    }
 
 
 
